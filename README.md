@@ -2,7 +2,7 @@
 
 Turn robot experiment videos into publication-ready figures: snapshot sequences with time labels, trajectories, ghost (stroboscopic) composites, method comparisons, and supplementary videos.
 
-**Open the tool:** https://YOUR-USERNAME.github.io/figure-bench/
+**Open the tool:** https://a2rlab.github.io/figure-bench/
 
 ## Your videos stay on your computer
 
