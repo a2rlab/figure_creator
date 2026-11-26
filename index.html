@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Figure Bench</title>
+<meta name="description" content="Turn robot experiment videos into publication figures, entirely in your browser.">
+<meta name="theme-color" content="#2A5B8A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E3E7EB;
+  --panel: #F8F9FA;
+  --ink: #18202A;
+  --muted: #5A6573;
+  --rule: #C3CAD2;
+  --accent: #2A5B8A;
+  --accent-ink: #FFFFFF;
+  --field: #FFFFFF;
+  --stage: #10161D;
+  --warn: #9A4B12;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161B21; --panel: #1E242C; --ink: #E4E8EC; --muted: #9AA5B1;
+    --rule: #333D48; --accent: #6E9FD0; --accent-ink: #0E1620; --field: #141A20;
+    --stage: #0A0E12; --warn: #E0A06A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161B21; --panel: #1E242C; --ink: #E4E8EC; --muted: #9AA5B1;
+  --rule: #333D48; --accent: #6E9FD0; --accent-ink: #0E1620; --field: #141A20;
+  --stage: #0A0E12; --warn: #E0A06A; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { height: 100%; }
+body {
+  margin: 0; min-height: 100%;
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.45 "Public Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+header {
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--rule);
+}
+header h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); font-size: 13px; }
+.app { display: grid; grid-template-columns: 330px minmax(0, 1fr); min-height: calc(100vh - 52px); }
+@media (max-width: 860px) { .app { grid-template-columns: 1fr; } }
+aside { border-right: 1px solid var(--rule); background: var(--panel); overflow-y: auto; }
+@media (min-width: 861px) { aside { max-height: calc(100vh - 52px); position: sticky; top: 0; } }
+section.step { padding: 14px 18px 16px; border-bottom: 1px solid var(--rule); }
+section.step h2 { font-size: 13px; font-weight: 600; margin: 0 0 10px; display: flex; gap: 8px; align-items: baseline; }
+section.step h2 span { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+.row label { color: var(--muted); font-size: 13px; min-width: 92px; }
+.row.tight label { min-width: 0; }
+input[type=number], input[type=text], select {
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--field);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 4px 6px; min-width: 0;
+}
+input[type=number] { width: 78px; font-variant-numeric: tabular-nums; }
+input[type=color] { width: 34px; height: 26px; padding: 0 2px; border: 1px solid var(--rule); border-radius: 3px; background: var(--field); }
+input[type=checkbox], input[type=range] { accent-color: var(--accent); }
+input[type=range] { width: 120px; }
+.val { font-variant-numeric: tabular-nums; min-width: 22px; text-align: right; font-size: 13px; }
+button {
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--field);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 5px 10px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.chip { font-size: 12px; border: 1px solid var(--rule); border-radius: 3px; padding: 1px 4px 1px 7px; font-variant-numeric: tabular-nums; display: inline-flex; gap: 4px; align-items: center; }
+.chip button { border: none; padding: 0 4px; background: none; color: var(--muted); }
+main { padding: 18px 20px 40px; min-width: 0; }
+.drop {
+  border: 1px dashed var(--rule); border-radius: 4px; padding: 44px 20px; text-align: center;
+  color: var(--muted); background: var(--panel);
+}
+.drop.over { border-color: var(--accent); color: var(--ink); }
+.drop strong { color: var(--ink); font-weight: 600; display: block; font-size: 15px; margin-bottom: 4px; }
+.stagebox { background: var(--stage); border-radius: 3px; padding: 10px; display: none; }
+.stagebox.ready { display: block; }
+.stage { position: relative; margin: 0 auto; width: 100%; }
+.stage video, .stage canvas.overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage canvas.overlay { cursor: default; touch-action: none; }
+.stage canvas.overlay.crosshair { cursor: crosshair; }
+.transport { display: flex; gap: 10px; align-items: center; margin-top: 8px; color: #C9D2DB; font-size: 13px; flex-wrap: wrap; }
+.transport button { background: #1E2731; color: #E4E8EC; border-color: #34404D; }
+.transport .time { font-variant-numeric: tabular-nums; }
+canvas.timeline { width: 100%; height: 40px; display: block; margin-top: 8px; cursor: pointer; touch-action: none; }
+.toolhint { color: #AEB9C4; font-size: 12.5px; margin-top: 6px; min-height: 18px; }
+.figurehead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 26px 0 8px; flex-wrap: wrap; }
+.figurehead h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.figurehead .meta { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.figwrap { background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; padding: 16px; overflow-x: auto; }
+.figwrap canvas { display: block; max-width: 100%; height: auto; margin: 0 auto; box-shadow: 0 0 0 1px var(--rule); background: #fff; }
+.trials { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.trial { display: flex; gap: 6px; align-items: center; padding: 3px 4px; border: 1px solid transparent; border-radius: 3px; }
+.trial.active { border-color: var(--accent); }
+.trial input[type=text] { flex: 1; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.empty { color: var(--muted); text-align: center; padding: 30px 10px; }
+.progress { height: 3px; background: var(--rule); margin-top: 8px; display: none; }
+.progress div { height: 100%; width: 0; background: var(--accent); }
+.status { font-size: 12.5px; color: var(--muted); }
+.status.warn { color: var(--warn); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Figure Bench</h1>
+  <p>Turn an experiment video into a snapshot figure for your paper. Everything runs in this browser; the video is never uploaded.</p>
+</header>
+
+<div class="app">
+<aside>
+  <section class="step">
+    <h2><span>1</span>Videos</h2>
+    <div class="row">
+      <input type="file" id="file" accept="video/mp4,video/*" multiple>
+    </div>
+    <div class="trials" id="trialList"></div>
+    <p class="hint" id="trialHint" style="display:none">Each video is one trial, for example a baseline and your method. Steps 2 to 7 apply to the video you are editing; all other settings are shared.</p>
+    <div class="row"><label for="fps">Frame rate</label><input type="number" id="fps" value="30" min="1" max="1000" step="any"> fps</div>
+    <p class="hint" id="vidinfo">Used for frame stepping and frame-number labels.</p>
+  </section>
+
+  <section class="step">
+    <h2><span>2</span>Time range</h2>
+    <div class="row"><label for="tStart">Start (s)</label><input type="number" id="tStart" step="0.01" min="0"><button id="setStart" disabled>Use current</button></div>
+    <div class="row"><label for="tEnd">End (s)</label><input type="number" id="tEnd" step="0.01" min="0"><button id="setEnd" disabled>Use current</button></div>
+  </section>
+
+  <section class="step">
+    <h2><span>3</span>Snapshots</h2>
+    <div class="row"><label for="outMode">Output</label>
+      <select id="outMode"><option value="grid">Snapshot grid</option><option value="ghost">Ghost composite</option><option value="both">Grid + ghost panel</option><option value="compare">Comparison, one row per video</option><option value="overlay">All paths on one background</option></select>
+    </div>
+    <div class="row"><label for="selMode">Selection</label>
+      <select id="selMode"><option value="uniform">Evenly spaced</option><option value="manual">Chosen by hand</option></select>
+    </div>
+    <div id="uniformBox" class="row"><label for="nSnap">Count</label><input type="number" id="nSnap" value="5" min="1" max="40"></div>
+    <div id="manualBox" style="display:none">
+      <div class="row"><button id="addKey" disabled>Add current frame</button><button id="clearKeys">Clear</button></div>
+      <div class="chips" id="keyChips"></div>
+    </div>
+    <div class="row"><label for="rows">Layout</label>
+      <select id="rows"><option value="1">One row</option><option value="2">Two rows</option><option value="3">Three rows</option><option value="col">One column</option></select>
+    </div>
+    <div class="row"><label for="gutter">Gap</label><input type="number" id="gutter" value="2" min="0" max="20" step="0.5"> pt</div>
+    <div class="row tight"><input type="checkbox" id="border"><label for="border">Thin border around each panel</label></div>
+  </section>
+
+  <section class="step">
+    <h2><span>4</span>Ghost composite</h2>
+    <p class="hint" id="ghostOff" style="margin:0 0 8px;color:var(--warn)">Not in use. Set Output in step 3 to “Ghost composite” or “Grid + ghost panel”, then press Process.</p>
+    <p class="hint" style="margin-top:0">Layers the robot from every snapshot onto one clean background, faint early and solid at the end. The background is the median of many frames, so the time range should include moments when the robot is elsewhere.</p>
+    <div class="row"><label for="bgN">Background</label><input type="number" id="bgN" value="15" min="5" max="41" step="2"> frames</div>
+    <div class="row"><label for="ghThr">Threshold</label><input type="range" id="ghThr" min="6" max="90" value="28"><span class="val" id="ghThrV">28</span></div>
+    <div class="row"><label for="ghClean">Clean-up</label><input type="range" id="ghClean" min="0" max="8" value="2"><span class="val" id="ghCleanV">2</span> px</div>
+    <div class="row"><label for="ghMin">First opacity</label><input type="range" id="ghMin" min="10" max="100" value="35"><span class="val" id="ghMinV">35</span>%</div>
+    <div class="row tight"><input type="checkbox" id="ghDebug"><label for="ghDebug">Highlight detected areas in red (for tuning)</label></div>
+    <p class="hint">Raise the threshold if shadows or noise appear; lower it if parts of the robot are missing.</p>
+  </section>
+
+  <section class="step">
+    <h2><span>5</span>Crop</h2>
+    <div class="row"><button id="toolCrop" disabled>Draw crop box</button><button id="resetCrop" disabled>Full frame</button></div>
+    <div class="row"><label for="aspect">Aspect</label>
+      <select id="aspect"><option value="free">Free</option><option value="1">1 : 1</option><option value="1.3333">4 : 3</option><option value="1.7778">16 : 9</option><option value="0.75">3 : 4</option></select>
+    </div>
+    <p class="hint">Drag on the video. The same crop applies to every panel.</p>
+  </section>
+
+  <section class="step">
+    <h2><span>6</span>Trajectory</h2>
+    <div class="row"><button id="toolTrack" disabled>Mark robot position</button></div>
+    <div class="row tight"><input type="checkbox" id="autoAdv" checked><label for="autoAdv">After each click, jump ahead</label><input type="number" id="advStep" value="0.5" min="0.01" step="0.1"> s</div>
+    <div class="row"><button id="undoPt">Undo point</button><button id="clearPts">Clear</button><button id="csvPts">Export CSV</button></div>
+    <p class="hint" id="ptCount">No points yet. Between points the path is interpolated linearly.</p>
+    <div class="row"><label for="trkMethod">Auto-track</label>
+      <select id="trkMethod"><option value="template">Follow appearance</option><option value="motion">Follow motion</option></select>
+    </div>
+    <div class="row"><label for="trkStep">Sample every</label><input type="number" id="trkStep" value="0.2" min="0.02" step="0.05"> s</div>
+    <div class="row"><label for="trkSize">Robot size</label><input type="number" id="trkSize" value="80" min="16" max="800" step="4"> px</div>
+    <div class="row"><button id="autoTrack" disabled>Track from this frame</button><button id="stopTrack" disabled>Stop</button></div>
+    <p class="hint">Mark the robot by hand on the current frame first. Tracking replaces later points up to the range end and stops where it loses the robot. "Follow motion" uses the ghost background and suits robots that change appearance as they turn.</p>
+    <div class="row"><label for="trajMode">Show on</label>
+      <select id="trajMode"><option value="progress">Each panel, up to its time</option><option value="full">Each panel, full path</option><option value="last">Last panel only</option><option value="off">Hidden</option></select>
+    </div>
+    <div class="row"><label for="trajColorMode">Colour</label>
+      <select id="trajColorMode"><option value="solid">Single colour</option><option value="time">By time (viridis)</option></select>
+      <input type="color" id="trajColor" value="#d62728" aria-label="Trajectory colour">
+    </div>
+    <div class="row tight"><input type="checkbox" id="cbar" checked><label for="cbar">Time colour bar under the figure</label></div>
+    <div class="row"><label for="trajWidth">Line width</label><input type="number" id="trajWidth" value="1.2" min="0.25" max="6" step="0.25"> pt</div>
+    <div class="row tight"><input type="checkbox" id="markStart" checked><label for="markStart">Start marker</label><input type="checkbox" id="markNow" checked><label for="markNow">Position dots</label></div>
+  </section>
+
+  <section class="step">
+    <h2><span>7</span>Zoom inset</h2>
+    <div class="row"><button id="toolInset" disabled>Draw zoom region</button><button id="clearInset">Remove</button></div>
+    <div class="row"><label for="insetWhere">Show in</label>
+      <select id="insetWhere"><option value="last">Last panel</option><option value="all">Every panel</option><option value="ghost">Ghost panel</option></select>
+    </div>
+    <div class="row"><label for="insetCorner">Corner</label>
+      <select id="insetCorner"><option value="tr">Top right</option><option value="tl">Top left</option><option value="br">Bottom right</option><option value="bl">Bottom left</option></select>
+    </div>
+    <div class="row"><label for="insetSize">Size</label><input type="range" id="insetSize" min="20" max="60" value="38"><span class="val" id="insetSizeV">38</span>% of panel</div>
+    <div class="row"><label for="insetColor">Box colour</label><input type="color" id="insetColor" value="#ffffff" aria-label="Inset box colour"><input type="checkbox" id="insetLines" checked><label for="insetLines" style="min-width:0">Connector lines</label></div>
+  </section>
+
+  <section class="step">
+    <h2><span>8</span>Labels</h2>
+    <div class="row"><label for="timeFmt">Time label</label>
+      <select id="timeFmt"><option value="s">t = 1.50 s</option><option value="frame">frame 45</option><option value="none">None</option></select>
+    </div>
+    <div class="row"><label for="timeDec">Decimals</label><input type="number" id="timeDec" value="1" min="0" max="3"></div>
+    <div class="row"><label for="timeOrigin">Zero at</label>
+      <select id="timeOrigin"><option value="start">Range start</option><option value="video">Video start</option></select>
+    </div>
+    <div class="row"><label for="panelLbl">Panel label</label>
+      <select id="panelLbl"><option value="paren">(a), (b), …</option><option value="plain">a, b, …</option><option value="none">None</option></select>
+    </div>
+    <div class="row"><label for="lblStyle">Label style</label>
+      <select id="lblStyle"><option value="box">Dark text on white box</option><option value="dark">White text on dark box</option><option value="halo">White text with outline</option><option value="black">Black text</option></select>
+    </div>
+    <div class="row"><label for="font">Font</label>
+      <select id="font"><option value="serif">Times (matches LaTeX body)</option><option value="sans">Helvetica / Arial</option></select>
+    </div>
+    <div class="row"><label for="fontPt">Size</label><input type="number" id="fontPt" value="8" min="5" max="14" step="0.5"> pt</div>
+    <div class="row tight"><input type="checkbox" id="rowLbl" checked><label for="rowLbl">Video names beside rows (comparison)</label></div>
+  </section>
+
+  <section class="step">
+    <h2><span>9</span>Output size</h2>
+    <div class="row"><label for="widthPreset">Width</label>
+      <select id="widthPreset">
+        <option value="7.16">IEEE two-column, 7.16 in</option>
+        <option value="3.5">IEEE one-column, 3.5 in</option>
+        <option value="6.85">Elsevier full, 190 mm</option>
+        <option value="3.54">Elsevier single, 90 mm</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="row" id="customWBox" style="display:none"><label for="customW">Custom</label><input type="number" id="customW" value="6" min="1" max="20" step="0.1"> in</div>
+    <div class="row"><label for="dpi">Resolution</label>
+      <select id="dpi"><option value="300">300 dpi</option><option value="600">600 dpi</option></select>
+    </div>
+    <div class="row"><button id="saveStyle">Save style</button><button id="loadStyleBtn">Load style</button><input type="file" id="loadStyle" accept=".json,application/json" hidden></div>
+    <p class="hint">Save a style once and load it for every figure in the paper.</p>
+  </section>
+
+  <section class="step">
+    <h2><span>10</span>Supplementary video</h2>
+    <div class="row"><label for="vidWhich">Videos</label><select id="vidWhich"><option value="active">The one being edited</option><option value="all">All, side by side</option></select></div>
+    <div class="row"><label for="vidSpeed">Speed</label><select id="vidSpeed"><option value="1">1×</option><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option></select></div>
+    <div class="row"><label for="vidWidth">Width</label><select id="vidWidth"><option value="1280">1280 px</option><option value="1920">1920 px</option></select></div>
+    <div class="row"><button id="recVideo" disabled>Record video</button><button id="recStop" disabled>Stop</button></div>
+    <p class="hint">Plays the time range with the crop, time label, speed-up label and growing trajectory, recording in real time (a 60 s range at 4× takes 15 s). Saves MP4 where the browser supports it, otherwise WebM. Keep this tab visible while it records.</p>
+  </section>
+
+</aside>
+
+<main>
+  <div class="drop" id="drop">
+    <strong>Drop an MP4 here</strong>
+    or choose one in step 1. A fixed (tripod) camera works best.
+  </div>
+
+  <div class="stagebox" id="stagebox">
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted preload="auto"></video>
+      <canvas class="overlay" id="overlay"></canvas>
+    </div>
+    <canvas class="timeline" id="timeline" aria-label="Timeline"></canvas>
+    <div class="transport">
+      <button id="play">Play</button>
+      <button id="prevF" title="Previous frame (←)">−1 frame</button>
+      <button id="nextF" title="Next frame (→)">+1 frame</button>
+      <span class="time" id="curTime">0.000 s</span>
+    </div>
+    <div class="toolhint" id="toolhint">← → step one frame, Shift for one second, Space to play.</div>
+  </div>
+
+  <div class="figurehead">
+    <h2>Figure</h2>
+    <span class="meta" id="figmeta"></span>
+  </div>
+  <div class="figwrap">
+    <div class="empty" id="figEmpty">Load a video, pick the snapshot times, then press Process.</div>
+    <canvas id="fig" style="display:none"></canvas>
+  </div>
+  <div class="progress" id="progress"><div></div></div>
+  <div class="actions">
+    <button class="primary" id="process" disabled>Process</button>
+    <button id="dlPng" disabled>Download PNG</button>
+    <button id="dlPdf" disabled>Download PDF</button>
+    <span class="status" id="status"></span>
+  </div>
+</main>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const video = $('video'), overlay = $('overlay'), octx = overlay.getContext('2d');
+const tl = $('timeline'), fig = $('fig');
+
+const G = { tool: 'none', boxDraft: null, busy: false, L: null, scalePts: [] };
+let S = { loaded: false, init: false, name: 'figure', track: [], keys: [], frames: new Map() };
+const EPS = 1e-4;
+
+/* ---------- helpers ---------- */
+const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) ? v : d; };
+const fps = () => Math.max(1, num('fps', 30));
+const keyOf = t => t.toFixed(4);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const fmt = t => t.toFixed(3) + ' s';
+function setStatus(msg, warn) { const s = $('status'); s.textContent = msg || ''; s.classList.toggle('warn', !!warn); }
+
+/* ---------- videos (trials) ---------- */
+const PALETTE = ['#1f77b4', '#d62728', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b'];
+const trials = [];
+let metaWaiters = [];
+const ENABLE_IDS = ['setStart', 'setEnd', 'addKey', 'toolCrop', 'resetCrop', 'toolTrack', 'toolInset', 'autoTrack', 'process', 'recVideo'];
+function newTrial(file) {
+  return { file, url: URL.createObjectURL(file), name: file.name.replace(/\.[^.]+$/, '') || 'video', init: false, loaded: false,
+    w: 0, h: 0, dur: 0, start: 0, end: 0, keys: [], crop: null, track: [], frames: new Map(), inset: null, bg: null, ghost: null,
+    scale: null, scaleLine: null, cur: 0, color: PALETTE[0] };
+}
+function addFiles(files) {
+  const list = [...files].filter(f => f && (/^video\//.test(f.type) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(f.name)));
+  if (!list.length) return;
+  const made = list.map(f => { const T = newTrial(f); T.color = PALETTE[trials.length % PALETTE.length]; trials.push(T); return T; });
+  renderTrials();
+  if (!trials.includes(S) || !S.init) switchTo(made[0]);
+  else setStatus(`Added ${made.length} video${made.length > 1 ? 's' : ''}. Press Edit next to one to set its range and trajectory.`);
+}
+function switchTo(T) {
+  if (S === T && S.loaded) return Promise.resolve();
+  if (S.loaded) S.cur = video.currentTime;
+  if (G.tool !== 'none') setTool(G.tool);
+  S = T; S.loaded = false;
+  setStatus('Loading video…');
+  return new Promise(res => { metaWaiters.push(res); video.src = T.url; video.load(); });
+}
+function renderTrials() {
+  const box = $('trialList'); box.textContent = '';
+  trials.forEach((T, i) => {
+    const row = document.createElement('div'); row.className = 'trial' + (T === S ? ' active' : '');
+    const sw = document.createElement('span'); sw.className = 'swatch'; sw.style.background = T.color;
+    const name = document.createElement('input'); name.type = 'text'; name.value = T.name; name.setAttribute('aria-label', 'Name of video ' + (i + 1));
+    name.addEventListener('input', () => { T.name = name.value || 'video'; schedule(); });
+    const sel = document.createElement('button'); sel.textContent = T === S ? 'Editing' : 'Edit'; sel.disabled = T === S;
+    sel.addEventListener('click', () => { if (!G.busy) switchTo(T); });
+    const rm = document.createElement('button'); rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove ' + T.name);
+    rm.addEventListener('click', () => removeTrial(T));
+    row.append(sw, name, sel, rm); box.appendChild(row);
+  });
+  $('trialHint').style.display = trials.length > 1 ? '' : 'none';
+}
+function removeTrial(T) {
+  if (G.busy) return;
+  if (T.track.length && !confirm(`Remove ${T.name} and its trajectory points?`)) return;
+  const i = trials.indexOf(T); trials.splice(i, 1); URL.revokeObjectURL(T.url);
+  trials.forEach((t, k) => t.color = PALETTE[k % PALETTE.length]);
+  if (S === T) {
+    if (trials.length) switchTo(trials[Math.max(0, i - 1)]);
+    else {
+      S = { loaded: false, init: false, name: 'figure', track: [], keys: [], frames: new Map() };
+      video.removeAttribute('src'); video.load();
+      $('stagebox').classList.remove('ready'); drop.style.display = '';
+      fig.style.display = 'none'; $('figEmpty').style.display = ''; $('figmeta').textContent = '';
+      ENABLE_IDS.forEach(id => $(id).disabled = true); $('dlPng').disabled = $('dlPdf').disabled = true;
+    }
+  }
+  renderTrials(); schedule();
+}
+$('file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+video.addEventListener('error', () => {
+  if (!video.getAttribute('src')) return;
+  setStatus(`${S.name || 'This video'} could not be decoded by the browser. Re-encode it as H.264 MP4 (for example with ffmpeg -c:v libx264) and try again.`, true);
+  metaWaiters.splice(0).forEach(f => f());
+});
+video.addEventListener('loadedmetadata', () => {
+  const T = S;
+  if (!T.init) {
+    T.init = true; T.w = video.videoWidth; T.h = video.videoHeight; T.dur = video.duration;
+    T.start = 0; T.end = T.dur; T.crop = { x: 0, y: 0, w: T.w, h: T.h };
+  }
+  T.loaded = true;
+  $('tStart').value = T.start.toFixed(3); $('tEnd').value = T.end.toFixed(3);
+  $('vidinfo').textContent = `${T.name}: ${T.w} × ${T.h} px, ${T.dur.toFixed(2)} s. Set the frame rate to match your recording.`;
+  drop.style.display = 'none'; $('stagebox').classList.add('ready');
+  ENABLE_IDS.forEach(id => $(id).disabled = false);
+  overlay.width = T.w; overlay.height = T.h;
+  if (T.cur) video.currentTime = T.cur;
+  sizeStage(); renderChips(); updatePtCount(); drawOverlay(); drawTimeline(); renderTrials();
+  metaWaiters.splice(0).forEach(f => f());
+  if (!G.busy) { setStatus(trials.length > 1 ? `Editing ${T.name}.` : 'Ready. Press Process to build the figure.'); schedule(); }
+});
+function sizeStage() {
+  if (!S.loaded) return;
+  const st = $('stage'); const ar = S.w / S.h;
+  const maxH = Math.max(220, window.innerHeight * 0.55);
+  st.style.aspectRatio = `${S.w} / ${S.h}`;
+  st.style.maxWidth = Math.round(maxH * ar) + 'px';
+  drawTimeline();
+}
+window.addEventListener('resize', sizeStage);
+
+/* ---------- transport ---------- */
+$('play').addEventListener('click', () => video.paused ? video.play() : video.pause());
+video.addEventListener('play', () => $('play').textContent = 'Pause');
+video.addEventListener('pause', () => $('play').textContent = 'Play');
+function step(dt) { video.pause(); video.currentTime = clamp(video.currentTime + dt, 0, S.dur - 1 / fps() / 2); }
+$('prevF').addEventListener('click', () => step(-1 / fps()));
+$('nextF').addEventListener('click', () => step(1 / fps()));
+function onTime() { $('curTime').textContent = `${fmt(video.currentTime)}  ·  frame ${Math.round(video.currentTime * fps())}`; drawOverlay(); drawTimeline(); toolHint(); }
+video.addEventListener('timeupdate', onTime);
+video.addEventListener('seeked', onTime);
+document.addEventListener('keydown', e => {
+  if (!S.loaded || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); step(e.shiftKey ? 1 : 1 / fps()); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); step(e.shiftKey ? -1 : -1 / fps()); }
+  else if (e.key === ' ') { e.preventDefault(); video.paused ? video.play() : video.pause(); }
+  else if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoPt(); }
+  else if (e.key === 'Escape') setTool('none');
+});
+
+/* ---------- time range ---------- */
+function readRange() {
+  S.start = clamp(num('tStart', 0), 0, S.dur);
+  S.end = clamp(num('tEnd', S.dur), 0, S.dur);
+  if (S.end <= S.start) S.end = Math.min(S.dur, S.start + 1 / fps());
+  drawTimeline(); schedule();
+}
+$('tStart').addEventListener('change', readRange);
+$('tEnd').addEventListener('change', readRange);
+$('setStart').addEventListener('click', () => { $('tStart').value = video.currentTime.toFixed(3); readRange(); });
+$('setEnd').addEventListener('click', () => { $('tEnd').value = video.currentTime.toFixed(3); readRange(); });
+
+/* ---------- snapshot selection ---------- */
+$('selMode').addEventListener('change', () => {
+  const m = $('selMode').value;
+  $('uniformBox').style.display = m === 'uniform' ? '' : 'none';
+  $('manualBox').style.display = m === 'manual' ? '' : 'none';
+  drawTimeline(); schedule();
+});
+$('addKey').addEventListener('click', () => {
+  const t = video.currentTime;
+  if (!S.keys.some(k => Math.abs(k - t) < EPS)) S.keys.push(t);
+  S.keys.sort((a, b) => a - b); renderChips(); drawTimeline(); schedule();
+});
+$('clearKeys').addEventListener('click', () => { S.keys = []; renderChips(); drawTimeline(); schedule(); });
+function renderChips() {
+  const box = $('keyChips'); box.textContent = '';
+  if (!S.keys.length) { const p = document.createElement('span'); p.className = 'hint'; p.textContent = 'Scrub to a moment and add it.'; box.appendChild(p); return; }
+  S.keys.forEach((t, i) => {
+    const c = document.createElement('span'); c.className = 'chip';
+    const lbl = document.createElement('span'); lbl.textContent = t.toFixed(2) + ' s'; c.appendChild(lbl);
+    const b = document.createElement('button'); b.textContent = '×'; b.setAttribute('aria-label', 'Remove ' + t.toFixed(2) + ' s');
+    b.addEventListener('click', () => { S.keys.splice(i, 1); renderChips(); drawTimeline(); schedule(); });
+    c.appendChild(b); box.appendChild(c);
+  });
+}
+function snapTimes() {
+  if (!S.loaded) return [];
+  const last = Math.max(0, S.dur - 0.5 / fps());
+  if ($('selMode').value === 'manual') return S.keys.map(t => clamp(t, 0, last));
+  const n = clamp(Math.round(num('nSnap', 5)), 1, 40);
+  const a = S.start, b = Math.min(S.end, last);
+  if (n === 1) return [a];
+  return Array.from({ length: n }, (_, i) => a + (b - a) * i / (n - 1));
+}
+
+/* ---------- tools on the video ---------- */
+const TOOLS = { crop: ['toolCrop', 'Draw crop box', 'Done cropping'], track: ['toolTrack', 'Mark robot position', 'Stop marking'], inset: ['toolInset', 'Draw zoom region', 'Done'] };
+function setTool(t) {
+  G.tool = G.tool === t ? 'none' : t; G.scalePts = [];
+  for (const [k, [id, off, on]] of Object.entries(TOOLS)) { $(id).classList.toggle('on', G.tool === k); $(id).textContent = G.tool === k ? on : off; }
+  overlay.classList.toggle('crosshair', G.tool !== 'none');
+  if (G.tool !== 'none') video.pause();
+  toolHint(); drawOverlay();
+}
+function toolHint() {
+  const h = $('toolhint');
+  if (G.tool === 'crop') h.textContent = 'Drag a box around the region you want in the figure.';
+  else if (G.tool === 'inset') h.textContent = 'Drag a box around the detail to magnify.';
+  else if (G.tool === 'track') h.textContent = `Click the robot's centre at ${fmt(video.currentTime)}.` + ($('autoAdv').checked ? ` The video then moves ahead ${num('advStep', 0.5)} s.` : '') + ' Ctrl+Z undoes, Esc stops.';
+  else h.textContent = '← → step one frame, Shift for one second, Space to play. Click a yellow dot on the timeline to jump to that point.';
+}
+$('toolCrop').addEventListener('click', () => setTool('crop'));
+$('toolTrack').addEventListener('click', () => setTool('track'));
+$('toolInset').addEventListener('click', () => setTool('inset'));
+$('resetCrop').addEventListener('click', () => { S.crop = { x: 0, y: 0, w: S.w, h: S.h }; drawOverlay(); schedule(); });
+$('clearInset').addEventListener('click', () => { S.inset = null; drawOverlay(); schedule(); });
+$('autoAdv').addEventListener('change', toolHint);
+
+function evPos(e) {
+  const r = overlay.getBoundingClientRect();
+  return { x: clamp((e.clientX - r.left) / r.width * S.w, 0, S.w), y: clamp((e.clientY - r.top) / r.height * S.h, 0, S.h) };
+}
+let drag = null;
+overlay.addEventListener('pointerdown', e => {
+  if (G.tool === 'crop' || G.tool === 'inset') { drag = evPos(e); overlay.setPointerCapture(e.pointerId); }
+  else if (G.tool === 'track') {
+    const p = evPos(e), t = video.currentTime;
+    S.track = S.track.filter(q => Math.abs(q.t - t) > 0.5 / fps());
+    S.track.push({ t, x: p.x, y: p.y }); S.track.sort((a, b) => a.t - b.t);
+    updatePtCount(); drawOverlay(); drawTimeline(); schedule();
+    if ($('autoAdv').checked) video.currentTime = clamp(t + num('advStep', 0.5), 0, S.dur - 0.5 / fps());
+  }
+});
+overlay.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const p = evPos(e); let w = p.x - drag.x, h = p.y - drag.y;
+  const a = $('aspect').value;
+  if (G.tool === 'crop' && a !== 'free') { const ar = parseFloat(a); h = Math.sign(h || 1) * Math.abs(w) / ar; }
+  let x = w < 0 ? drag.x + w : drag.x, y = h < 0 ? drag.y + h : drag.y;
+  w = Math.abs(w); h = Math.abs(h);
+  x = clamp(x, 0, S.w); y = clamp(y, 0, S.h); w = Math.min(w, S.w - x); h = Math.min(h, S.h - y);
+  G.boxDraft = { x, y, w, h }; drawOverlay();
+});
+overlay.addEventListener('pointerup', () => {
+  if (!drag) return; drag = null;
+  const b = G.boxDraft;
+  if (b && b.w > 8 && b.h > 8) { if (G.tool === 'inset') S.inset = b; else S.crop = b; }
+  G.boxDraft = null; drawOverlay(); schedule();
+});
+
+/* ---------- trajectory data ---------- */
+function posAt(t) {
+  const P = S.track; if (!P.length || t < P[0].t - EPS) return null;
+  if (t >= P[P.length - 1].t) return { x: P[P.length - 1].x, y: P[P.length - 1].y };
+  for (let i = 1; i < P.length; i++) if (t <= P[i].t) {
+    const a = P[i - 1], b = P[i], u = (t - a.t) / (b.t - a.t || 1);
+    return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
+  }
+  return null;
+}
+function pathUpTo(t) {
+  const out = S.track.filter(p => p.t <= t + EPS).map(p => ({ ...p }));
+  const q = posAt(t); if (q && out.length && t > out[out.length - 1].t + EPS) out.push({ t, ...q });
+  return out;
+}
+function updatePtCount() {
+  const n = S.track.length;
+  $('ptCount').textContent = n ? `${n} point${n > 1 ? 's' : ''}, ${S.track[0].t.toFixed(2)} s to ${S.track[n - 1].t.toFixed(2)} s. Between points the path is interpolated linearly.` : 'No points yet. Between points the path is interpolated linearly.';
+}
+function undoPt() {
+  if (!S.track.length) return;
+  const t = video.currentTime;
+  let idx = S.track.length - 1, best = Infinity;
+  S.track.forEach((p, i) => { const d = Math.abs(p.t - t); if (d < best) { best = d; idx = i; } });
+  const removed = S.track.splice(idx, 1)[0];
+  if (removed) video.currentTime = removed.t;
+  updatePtCount(); drawOverlay(); drawTimeline(); schedule();
+}
+$('undoPt').addEventListener('click', undoPt);
+$('clearPts').addEventListener('click', () => { if (S.track.length && !confirm('Remove all trajectory points?')) return; S.track = []; updatePtCount(); drawOverlay(); drawTimeline(); schedule(); });
+$('csvPts').addEventListener('click', () => {
+  if (!S.track.length) { setStatus('There are no trajectory points to export yet.', true); return; }
+  const rows = ['t_s,frame,x_px,y_px', ...S.track.map(p => `${p.t.toFixed(4)},${Math.round(p.t * fps())},${p.x.toFixed(2)},${p.y.toFixed(2)}`)];
+  saveFile(S.name + '_trajectory.csv', new Blob([rows.join('\n') + '\n'], { type: 'text/csv' }));
+});
+
+/* ---------- automatic tracking ---------- */
+function grayCanvas(w, h) {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  return src => {
+    cx.drawImage(src, 0, 0, w, h);
+    const d = cx.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+    for (let i = 0, j = 0; j < g.length; i += 4, j++) g[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    return g;
+  };
+}
+function patch(g, w, h, cx, cy, half) {
+  const s = 2 * half + 1, out = new Float32Array(s * s); let k = 0;
+  cx = Math.round(cx); cy = Math.round(cy);
+  for (let y = -half; y <= half; y++) for (let x = -half; x <= half; x++)
+    out[k++] = g[clamp(cy + y, 0, h - 1) * w + clamp(cx + x, 0, w - 1)];
+  return out;
+}
+function nccSearch(g, w, h, tpl, half, cx0, cy0, R) {
+  const s = 2 * half + 1, n = s * s;
+  let tm = 0; for (let i = 0; i < n; i++) tm += tpl[i]; tm /= n;
+  const tz = new Float32Array(n); let tv = 0;
+  for (let i = 0; i < n; i++) { tz[i] = tpl[i] - tm; tv += tz[i] * tz[i]; }
+  tv = Math.sqrt(tv) || 1;
+  let best = -2, bx = cx0, by = cy0;
+  const x0 = Math.round(cx0), y0 = Math.round(cy0);
+  for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+    const cx = x0 + dx, cy = y0 + dy;
+    if (cx - half < 0 || cy - half < 0 || cx + half >= w || cy + half >= h) continue;
+    let sum = 0, ss = 0, sc = 0, k = 0;
+    for (let yy = -half; yy <= half; yy++) {
+      const row = (cy + yy) * w + cx - half;
+      for (let xx = 0; xx < s; xx++) { const v = g[row + xx]; sum += v; ss += v * v; sc += v * tz[k++]; }
+    }
+    const mean = sum / n, vr = ss - n * mean * mean;
+    if (vr <= 1e-6) continue;
+    const score = sc / (Math.sqrt(vr) * tv);
+    if (score > best) { best = score; bx = cx; by = cy; }
+  }
+  return { x: bx, y: by, score: best };
+}
+function motionFind(g, bgG, w, h, cx, cy, R, thr) {
+  R = Math.round(R); const minCount = Math.max(6, 0.03 * (2 * R + 1) * (2 * R + 1));
+  for (let it = 0; it < 3; it++) {
+    let sx = 0, sy = 0, n = 0;
+    const xa = Math.max(0, Math.round(cx - R)), xb = Math.min(w - 1, Math.round(cx + R));
+    const ya = Math.max(0, Math.round(cy - R)), yb = Math.min(h - 1, Math.round(cy + R));
+    for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+      const i = y * w + x; if (Math.abs(g[i] - bgG[i]) > thr) { sx += x; sy += y; n++; }
+    }
+    if (n < minCount) return null;
+    cx = sx / n; cy = sy / n;
+  }
+  return { x: cx, y: cy, score: 1 };
+}
+let trackAbort = false;
+$('stopTrack').addEventListener('click', () => { trackAbort = true; });
+$('autoTrack').addEventListener('click', async () => {
+  if (G.busy) return;
+  const t0 = video.currentTime;
+  const seed = S.track.find(p => Math.abs(p.t - t0) < 0.5 / fps());
+  if (!seed) { setStatus('Mark the robot by hand on the current frame first, then start tracking.', true); return; }
+  const method = $('trkMethod').value;
+  G.busy = true; trackAbort = false; $('autoTrack').disabled = true; $('stopTrack').disabled = false; $('process').disabled = true;
+  if (G.tool === 'track') setTool('track');
+  try {
+    if (method === 'motion') await ensureBg();
+    const sc = Math.min(1, 640 / S.w), w = Math.round(S.w * sc), h = Math.round(S.h * sc);
+    const gray = grayCanvas(w, h);
+    let bgG = null;
+    if (method === 'motion') {
+      const bc = document.createElement('canvas'); bc.width = S.bg.w; bc.height = S.bg.h;
+      bc.getContext('2d').putImageData(new ImageData(S.bg.data, S.bg.w, S.bg.h), 0, 0);
+      bgG = gray(bc);
+    }
+    const dt = Math.max(0.02, num('trkStep', 0.2));
+    const tEnd = Math.min(S.end, S.dur - 0.5 / fps());
+    const half = Math.max(5, Math.round(num('trkSize', 80) * sc / 2));
+    S.track = S.track.filter(p => p.t <= seed.t + EPS || p.t > tEnd + EPS);
+    await seekTo(seed.t);
+    let g = gray(video), px = seed.x * sc, py = seed.y * sc;
+    let tpl = patch(g, w, h, px, py, half);
+    const R = Math.round(half * 1.2) + 4;
+    let lostAt = null, lastT = seed.t;
+    for (let t = seed.t + dt; t <= tEnd + EPS && !trackAbort; t += dt) {
+      await seekTo(t); g = gray(video);
+      const res = method === 'template' ? nccSearch(g, w, h, tpl, half, px, py, R) : motionFind(g, bgG, w, h, px, py, half * 1.5, num('ghThr', 28));
+      if (!res || res.score < 0.45) { lostAt = t; break; }
+      px = res.x; py = res.y;
+      if (method === 'template') { const nt = patch(g, w, h, px, py, half); for (let i = 0; i < tpl.length; i++) tpl[i] = 0.85 * tpl[i] + 0.15 * nt[i]; }
+      S.track.push({ t, x: px / sc, y: py / sc }); S.track.sort((a, b) => a.t - b.t); lastT = t;
+      updatePtCount(); drawTimeline(); drawOverlay();
+      setStatus(`Tracking… ${t.toFixed(2)} s` + (method === 'template' ? `, match ${res.score.toFixed(2)}` : ''));
+    }
+    if (lostAt != null) { await seekTo(lostAt); setStatus(`Lost the robot at ${lostAt.toFixed(2)} s. Mark it there by hand, then track again from that frame.`, true); }
+    else if (trackAbort) setStatus(`Stopped at ${lastT.toFixed(2)} s.`);
+    else setStatus(`Tracked to ${lastT.toFixed(2)} s. Check the path; click a timeline dot and re-mark any point that is off.`);
+  } catch (err) { setStatus('Tracking failed: ' + err.message, true); }
+  finally { G.busy = false; $('autoTrack').disabled = false; $('stopTrack').disabled = true; $('process').disabled = false; drawOverlay(); schedule(); }
+});
+
+/* ---------- overlay & timeline drawing ---------- */
+function drawOverlay() {
+  if (!S.loaded) return;
+  const k = S.w / (overlay.getBoundingClientRect().width || S.w);
+  octx.clearRect(0, 0, S.w, S.h);
+  const c = (G.tool === 'crop' && G.boxDraft) || S.crop;
+  if (c && (c.w < S.w - 1 || c.h < S.h - 1 || G.tool === 'crop')) {
+    octx.fillStyle = 'rgba(0,0,0,0.5)';
+    octx.beginPath(); octx.rect(0, 0, S.w, S.h); octx.rect(c.x, c.y, c.w, c.h); octx.fill('evenodd');
+    octx.strokeStyle = '#fff'; octx.lineWidth = 1.5 * k; octx.setLineDash([6 * k, 4 * k]);
+    octx.strokeRect(c.x, c.y, c.w, c.h); octx.setLineDash([]);
+  }
+  const ins = (G.tool === 'inset' && G.boxDraft) || S.inset;
+  if (ins) {
+    octx.lineWidth = 3 * k; octx.strokeStyle = 'rgba(0,0,0,0.6)'; octx.strokeRect(ins.x, ins.y, ins.w, ins.h);
+    octx.lineWidth = 1.5 * k; octx.strokeStyle = $('insetColor').value; octx.strokeRect(ins.x, ins.y, ins.w, ins.h);
+  }
+  if (S.track.length) {
+    octx.lineWidth = 2 * k; octx.strokeStyle = 'rgba(255,215,0,0.9)'; octx.lineJoin = 'round';
+    octx.beginPath(); S.track.forEach((p, i) => i ? octx.lineTo(p.x, p.y) : octx.moveTo(p.x, p.y)); octx.stroke();
+    S.track.forEach(p => {
+      const near = Math.abs(p.t - video.currentTime) < 0.5 / fps();
+      octx.beginPath(); octx.arc(p.x, p.y, (near ? 5 : 3) * k, 0, Math.PI * 2);
+      octx.fillStyle = near ? '#ffd700' : 'rgba(255,215,0,0.75)'; octx.fill();
+      octx.lineWidth = 1 * k; octx.strokeStyle = '#000'; octx.stroke();
+    });
+    const q = posAt(video.currentTime);
+    if (q && G.tool === 'track') { octx.beginPath(); octx.arc(q.x, q.y, 9 * k, 0, Math.PI * 2); octx.strokeStyle = '#fff'; octx.lineWidth = 1.5 * k; octx.stroke(); }
+  }
+}
+function drawTimeline() {
+  if (!S.loaded) return;
+  const dpr = window.devicePixelRatio || 1, W = tl.clientWidth, H = tl.clientHeight;
+  tl.width = W * dpr; tl.height = H * dpr;
+  const c = tl.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const X = t => 6 + (W - 12) * (t / S.dur);
+  c.fillStyle = '#1E2731'; c.fillRect(6, 14, W - 12, 12);
+  c.fillStyle = '#3B5672'; c.fillRect(X(S.start), 14, Math.max(1, X(S.end) - X(S.start)), 12);
+  c.fillStyle = '#E8EDF2';
+  snapTimes().forEach(t => c.fillRect(Math.round(X(t)) - 1, 8, 2, 24));
+  c.fillStyle = '#FFD700';
+  S.track.forEach(p => { c.beginPath(); c.arc(X(p.t), 20, 2, 0, Math.PI * 2); c.fill(); });
+  const px = X(video.currentTime);
+  c.fillStyle = '#FF6B6B'; c.fillRect(Math.round(px) - 1, 2, 2, 36);
+  c.fillStyle = '#9AA7B4'; c.font = '11px "Public Sans", sans-serif';
+  c.textBaseline = 'bottom'; c.textAlign = 'left'; c.fillText('0 s', 6, 40);
+  c.textAlign = 'right'; c.fillText(S.dur.toFixed(1) + ' s', W - 6, 40);
+}
+let tlDrag = false;
+const tlSeek = (e, snap) => {
+  if (G.busy) return;
+  const r = tl.getBoundingClientRect(), ex = e.clientX - r.left;
+  video.pause();
+  if (snap && S.track.length) {
+    const X = t => 6 + (r.width - 12) * (t / S.dur);
+    let best = null, bd = 5;
+    S.track.forEach(p => { const d = Math.abs(X(p.t) - ex); if (d < bd) { bd = d; best = p; } });
+    if (best) { video.currentTime = best.t; return; }
+  }
+  video.currentTime = clamp((ex - 6) / (r.width - 12), 0, 1) * Math.max(0, S.dur - 0.5 / fps());
+};
+tl.addEventListener('pointerdown', e => { if (!S.loaded) return; tlDrag = true; tl.setPointerCapture(e.pointerId); tlSeek(e, true); });
+tl.addEventListener('pointermove', e => { if (tlDrag) tlSeek(e, false); });
+tl.addEventListener('pointerup', () => tlDrag = false);
+
+/* ---------- frame grabbing ---------- */
+function prog(f) {
+  const bar = $('progress');
+  if (f == null) { bar.style.display = 'none'; bar.firstElementChild.style.width = '0'; return; }
+  bar.style.display = 'block'; bar.firstElementChild.style.width = (f * 100) + '%';
+}
+const yieldUI = () => new Promise(r => setTimeout(r, 0));
+function seekTo(t) {
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if (done) return; done = true; video.removeEventListener('seeked', fin); clearTimeout(to); requestAnimationFrame(() => requestAnimationFrame(res)); };
+    const to = setTimeout(fin, 2500);
+    video.addEventListener('seeked', fin);
+    video.currentTime = t;
+  });
+}
+async function grab(times) {
+  video.pause();
+  const t0 = video.currentTime, need = times.filter(t => !S.frames.has(keyOf(t)));
+  for (let i = 0; i < need.length; i++) {
+    await seekTo(need[i]);
+    const cv = document.createElement('canvas'); cv.width = S.w; cv.height = S.h;
+    cv.getContext('2d').drawImage(video, 0, 0, S.w, S.h);
+    S.frames.set(keyOf(need[i]), cv);
+    prog((i + 1) / need.length); setStatus(`Grabbing frame ${i + 1} of ${need.length}…`);
+  }
+  prog(null);
+  if (need.length) await seekTo(t0);
+}
+
+/* ---------- background & ghost composite ---------- */
+function procDims() { const k = Math.min(1, 1920 / S.w); return { k, w: Math.round(S.w * k), h: Math.round(S.h * k) }; }
+function bgKey() { return `${S.start.toFixed(4)}|${S.end.toFixed(4)}|${clamp(Math.round(num('bgN', 15)), 5, 41)}`; }
+function quickselect(a, n, k) {
+  let l = 0, r = n - 1;
+  while (r > l) {
+    const piv = a[(l + r) >> 1]; let i = l, j = r;
+    while (i <= j) { while (a[i] < piv) i++; while (a[j] > piv) j--; if (i <= j) { const t = a[i]; a[i] = a[j]; a[j] = t; i++; j--; } }
+    if (k <= j) r = j; else if (k >= i) l = i; else break;
+  }
+  return a[k];
+}
+async function ensureBg() {
+  const key = bgKey();
+  if (S.bg && S.bg.key === key) return S.bg;
+  const n = clamp(Math.round(num('bgN', 15)), 5, 41), { k, w, h } = procDims();
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  const last = Math.max(0, S.dur - 0.5 / fps()), a = S.start, b = Math.min(S.end, last);
+  const t0 = video.currentTime; video.pause();
+  const samples = [];
+  for (let i = 0; i < n; i++) {
+    await seekTo(a + (b - a) * i / (n - 1));
+    cx.drawImage(video, 0, 0, w, h); samples.push(cx.getImageData(0, 0, w, h).data);
+    prog(0.5 * (i + 1) / n); setStatus(`Estimating background: frame ${i + 1} of ${n}…`);
+  }
+  await seekTo(t0);
+  const N = w * h * 4, out = new Uint8ClampedArray(N), buf = new Uint8Array(n), mid = n >> 1;
+  for (let p = 0; p < N; p++) {
+    if ((p & 3) === 3) { out[p] = 255; continue; }
+    for (let s = 0; s < n; s++) buf[s] = samples[s][p];
+    out[p] = quickselect(buf, n, mid);
+    if ((p & 0x7FFFF) === 0) { prog(0.5 + 0.5 * p / N); setStatus('Estimating background: computing median…'); await yieldUI(); }
+  }
+  prog(null);
+  S.bg = { key, k, w, h, data: out }; S.ghost = null;
+  return S.bg;
+}
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(w * h), dst = new Float32Array(w * h), d = 2 * r + 1;
+  for (let y = 0; y < h; y++) {
+    const o = y * w; let acc = 0;
+    for (let x = -r; x <= r; x++) acc += src[o + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++) { tmp[o + x] = acc / d; acc += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
+  }
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let y = -r; y <= r; y++) acc += tmp[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++) { dst[y * w + x] = acc / d; acc += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+  }
+  return dst;
+}
+function ghostKey(times) { return [S.bg ? S.bg.key : '', times.map(keyOf).join(','), $('ghThr').value, $('ghClean').value, $('ghMin').value, $('ghDebug').checked].join('#'); }
+function needsGhost() { return $('outMode').value !== 'grid'; }
+async function buildGhost(times) {
+  const key = ghostKey(times);
+  if (S.ghost && S.ghost.key === key) return;
+  const { w, h, data: bg, k } = S.bg;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  const P = w * h, out = new Float32Array(P * 3);
+  for (let j = 0; j < P; j++) { out[3 * j] = bg[4 * j]; out[3 * j + 1] = bg[4 * j + 1]; out[3 * j + 2] = bg[4 * j + 2]; }
+  const thr = num('ghThr', 28), r = Math.round(num('ghClean', 2)), minA = num('ghMin', 35) / 100, dbg = $('ghDebug').checked;
+  const union = dbg ? new Float32Array(P) : null, n = times.length;
+  for (let f = 0; f < n; f++) {
+    cx.drawImage(S.frames.get(keyOf(times[f])), 0, 0, w, h);
+    const d = cx.getImageData(0, 0, w, h).data;
+    let m = new Float32Array(P);
+    for (let j = 0; j < P; j++) {
+      const i = 4 * j;
+      const diff = Math.max(Math.abs(d[i] - bg[i]), Math.abs(d[i + 1] - bg[i + 1]), Math.abs(d[i + 2] - bg[i + 2]));
+      m[j] = diff > thr ? 1 : 0;
+    }
+    if (r > 0) {
+      m = boxBlur(m, w, h, r); for (let j = 0; j < P; j++) m[j] = m[j] > 0.5 ? 1 : 0;
+      m = boxBlur(m, w, h, Math.max(1, r >> 1));
+    }
+    const a = n === 1 ? 1 : minA + (1 - minA) * f / (n - 1);
+    for (let j = 0; j < P; j++) {
+      const al = a * m[j]; if (al <= 0) continue;
+      const i = 4 * j, o = 3 * j;
+      out[o] += (d[i] - out[o]) * al; out[o + 1] += (d[i + 1] - out[o + 1]) * al; out[o + 2] += (d[i + 2] - out[o + 2]) * al;
+      if (union && m[j] > union[j]) union[j] = m[j];
+    }
+    prog((f + 1) / n); setStatus(`Building ghost composite: ${f + 1} of ${n}…`); await yieldUI();
+  }
+  const img = cx.createImageData(w, h);
+  for (let j = 0; j < P; j++) {
+    let R = out[3 * j], G = out[3 * j + 1], B = out[3 * j + 2];
+    if (union && union[j] > 0) { const u = 0.55 * union[j]; R += (230 - R) * u; G += (20 - G) * u; B += (20 - B) * u; }
+    img.data[4 * j] = R; img.data[4 * j + 1] = G; img.data[4 * j + 2] = B; img.data[4 * j + 3] = 255;
+  }
+  cx.putImageData(img, 0, 0);
+  prog(null);
+  S.ghost = { key, cv, k };
+}
+
+/* ---------- figure rendering ---------- */
+const VIRIDIS = [[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]];
+function viridis(u) {
+  u = clamp(u, 0, 1) * (VIRIDIS.length - 1); const i = Math.min(VIRIDIS.length - 2, Math.floor(u)), f = u - i;
+  const a = VIRIDIS[i], b = VIRIDIS[i + 1];
+  return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
+}
+function opts() {
+  const wp = $('widthPreset').value;
+  return {
+    mode: $('outMode').value,
+    widthIn: wp === 'custom' ? clamp(num('customW', 6), 1, 20) : parseFloat(wp),
+    rows: $('rows').value, gutterPt: num('gutter', 2), border: $('border').checked,
+    trajMode: $('trajMode').value, trajColorMode: $('trajColorMode').value, trajColor: $('trajColor').value,
+    trajWidth: num('trajWidth', 1.2), markStart: $('markStart').checked, markNow: $('markNow').checked, cbar: $('cbar').checked,
+    timeFmt: $('timeFmt').value, timeDec: clamp(Math.round(num('timeDec', 1)), 0, 3), timeOrigin: $('timeOrigin').value,
+    panelLbl: $('panelLbl').value, lblStyle: $('lblStyle').value, font: $('font').value, fontPt: num('fontPt', 8), rowLbl: $('rowLbl').checked,
+    insetWhere: $('insetWhere').value, insetCorner: $('insetCorner').value, insetSize: num('insetSize', 38) / 100,
+    insetColor: $('insetColor').value, insetLines: $('insetLines').checked
+  };
+}
+function withTrial(T, fn) { const prev = S; S = T; try { return fn(); } finally { S = prev; } }
+function readyTrials() { return trials.filter(T => T.init); }
+function fitRect(r, ar) {
+  if (r.w / r.h > ar) { const w = r.h * ar; return { x: r.x + (r.w - w) / 2, y: r.y, w, h: r.h }; }
+  const h = r.w / ar; return { x: r.x, y: r.y + (r.h - h) / 2, w: r.w, h };
+}
+function fontFamily(o) { return o.font === 'serif' ? '"Times New Roman", Times, "Liberation Serif", serif' : 'Helvetica, Arial, "Liberation Sans", sans-serif'; }
+function drawLabel(c, o, fpx, txt, ax, ay, align) {
+  c.font = `${fpx}px ${fontFamily(o)}`; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
+  const pad = fpx * 0.35, asc = fpx * 0.72, desc = fpx * 0.22, lblH = asc + desc + 2 * pad;
+  const tw = c.measureText(txt).width;
+  const bx = align === 'right' ? ax - tw - 2 * pad : ax, bw = tw + 2 * pad;
+  const by = align === 'bottom' || align === 'right' ? ay - lblH : ay;
+  const tx = bx + pad, ty = by + pad + asc;
+  if (o.lblStyle === 'box' || o.lblStyle === 'dark') {
+    c.fillStyle = o.lblStyle === 'box' ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.62)';
+    c.fillRect(bx, by, bw, lblH);
+    c.fillStyle = o.lblStyle === 'box' ? '#000' : '#fff'; c.fillText(txt, tx, ty);
+  } else if (o.lblStyle === 'halo') {
+    c.lineWidth = fpx * 0.22; c.strokeStyle = 'rgba(0,0,0,0.85)'; c.lineJoin = 'round';
+    c.strokeText(txt, tx, ty); c.fillStyle = '#fff'; c.fillText(txt, tx, ty);
+  } else { c.fillStyle = '#000'; c.fillText(txt, tx, ty); }
+  return lblH;
+}
+function needsGhost() { const m = $('outMode').value; return m === 'ghost' || m === 'both'; }
+function layoutSpec() {
+  const mode = $('outMode').value, ready = readyTrials();
+  if (mode === 'compare') {
+    const panels = []; let cols = 1;
+    ready.forEach((T, r) => {
+      const ts = withTrial(T, snapTimes); cols = Math.max(cols, ts.length);
+      ts.forEach((t, c) => panels.push({ type: 'frame', T, t, times: ts, r, c }));
+    });
+    return { panels, cols, rows: ready.length, rowTrials: ready };
+  }
+  const times = snapTimes();
+  if (mode === 'overlay') return { panels: times.length ? [{ type: 'overlay', T: S, times, trials: ready }] : [], times };
+  const panels = [];
+  if (mode !== 'ghost') times.forEach(t => panels.push({ type: 'frame', T: S, t, times }));
+  if (mode !== 'grid' && times.length) panels.push({ type: 'ghost', T: S, times });
+  return { panels, times };
+}
+function bgCanvas(T) {
+  if (!T.bg.cv) { const cv = document.createElement('canvas'); cv.width = T.bg.w; cv.height = T.bg.h; cv.getContext('2d').putImageData(new ImageData(T.bg.data, T.bg.w, T.bg.h), 0, 0); T.bg.cv = cv; }
+  return T.bg.cv;
+}
+function panelReady(p) {
+  return withTrial(p.T, () => {
+    if (p.type === 'frame') return S.frames.has(keyOf(p.t));
+    if (p.type === 'ghost') return !!(S.ghost && S.ghost.key === ghostKey(p.times));
+    return !!(S.bg && S.bg.key === bgKey());
+  });
+}
+function srcFor(p) {
+  if (p.type === 'ghost') return { img: S.ghost.cv, k: S.ghost.k };
+  if (p.type === 'overlay') return { img: bgCanvas(S), k: S.bg.k };
+  return { img: S.frames.get(keyOf(p.t)), k: 1 };
+}
+function colorSpan(trs) {
+  let span = 0;
+  trs.forEach(T => { if (T.track.length) span = Math.max(span, T.track[T.track.length - 1].t - T.start); });
+  return span || 1;
+}
+function drawTraj(c, map, o, pt, panel, span, override) {
+  const full = panel.type !== 'frame' || o.trajMode === 'full';
+  const path = (full ? S.track : pathUpTo(panel.t)).map(p => ({ t: p.t, ...map(p) }));
+  const lw = o.trajWidth * pt, U = tt => (tt - S.start) / span;
+  const col = u => override || (o.trajColorMode === 'solid' ? o.trajColor : viridis(u));
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  if (path.length > 1) {
+    c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = lw + 1.2 * pt;
+    c.beginPath(); path.forEach((p, k) => k ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.stroke();
+    c.lineWidth = lw;
+    if (override || o.trajColorMode === 'solid') {
+      c.strokeStyle = col(0); c.beginPath(); path.forEach((p, k) => k ? c.lineTo(p.x, p.y) : c.moveTo(p.x, p.y)); c.stroke();
+    } else for (let k = 1; k < path.length; k++) {
+      c.strokeStyle = viridis(U((path[k - 1].t + path[k].t) / 2));
+      c.beginPath(); c.moveTo(path[k - 1].x, path[k - 1].y); c.lineTo(path[k].x, path[k].y); c.stroke();
+    }
+  }
+  const mr = Math.max(lw * 1.6, 2 * pt);
+  const dot = (m, fill, r) => { c.beginPath(); c.arc(m.x, m.y, r, 0, Math.PI * 2); c.fillStyle = fill; c.fill(); c.lineWidth = 0.6 * pt; c.strokeStyle = '#fff'; c.stroke(); };
+  if (o.markStart && path.length) {
+    c.beginPath(); c.arc(path[0].x, path[0].y, mr, 0, Math.PI * 2);
+    c.fillStyle = '#fff'; c.fill(); c.lineWidth = Math.max(0.6 * pt, lw * 0.6); c.strokeStyle = col(0); c.stroke();
+  }
+  if (panel.type === 'overlay' && path.length) dot(path[path.length - 1], col(1), mr);
+  if (o.markNow) {
+    if (panel.type === 'ghost') panel.times.forEach(tt => { const q = posAt(tt); if (q) dot(map(q), col(U(tt)), mr * 0.85); });
+    else if (panel.type === 'frame' && o.trajMode !== 'full') { const q = posAt(panel.t); if (q) dot(map(q), col(U(panel.t)), mr); }
+  }
+}
+
+function render(canvas, L, dpi) {
+  const o = opts(), panels = L.panels, n = panels.length, pt = dpi / 72, fpx = o.fontPt * pt, fam = fontFamily(o);
+  const active = S;
+  let cols, rows;
+  if (L.rowTrials) { cols = L.cols; rows = L.rows; }
+  else if (o.rows === 'col') { cols = 1; rows = n; }
+  else { rows = Math.min(n, parseInt(o.rows, 10)); cols = Math.ceil(n / rows); }
+  const g = o.gutterPt * pt, ar = active.crop.w / active.crop.h;
+  const W = Math.round(o.widthIn * dpi);
+  const rowW = L.rowTrials && o.rowLbl ? fpx * 1.7 : 0;
+  const pw = (W - rowW - (cols - 1) * g) / cols, ph = pw / ar;
+  const Hgrid = Math.round(rows * ph + (rows - 1) * g);
+  const figTrials = L.rowTrials || (o.mode === 'overlay' ? readyTrials() : [active]);
+  const span = colorSpan(figTrials);
+  const showCb = o.cbar && o.trajColorMode === 'time' && o.trajMode !== 'off' && o.mode !== 'overlay' && figTrials.some(T => T.track.length > 1);
+  const cbBar = fpx * 0.55, cbGap = Math.max(g, 3 * pt), cbH = showCb ? cbGap + cbBar + fpx * 1.35 : 0;
+  const H = Math.round(Hgrid + cbH);
+  canvas.width = W; canvas.height = H;
+  const c = canvas.getContext('2d');
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
+  c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+
+  panels.forEach((panel, i) => {
+    const r = L.rowTrials ? panel.r : Math.floor(i / cols), col = L.rowTrials ? panel.c : i % cols;
+    const x0 = rowW + col * (pw + g), y0 = r * (ph + g);
+    const rowLast = L.rowTrials ? col === panel.times.length - 1 : i === n - 1;
+    S = panel.T;
+    try {
+      const cr = fitRect(S.crop, ar), sx = pw / cr.w, sy = ph / cr.h;
+      const src = srcFor(panel);
+      c.save();
+      c.beginPath(); c.rect(x0, y0, pw, ph); c.clip();
+      c.drawImage(src.img, cr.x * src.k, cr.y * src.k, cr.w * src.k, cr.h * src.k, x0, y0, pw, ph);
+      const map = p => ({ x: x0 + (p.x - cr.x) * sx, y: y0 + (p.y - cr.y) * sy });
+
+      const showTraj = o.trajMode !== 'off' && (panel.type !== 'frame' || o.trajMode !== 'last' || rowLast);
+      const drawAllTraj = mapFn => {
+        if (!showTraj) return;
+        if (panel.type === 'overlay') panel.trials.forEach(T => { if (T.track.length) withTrial(T, () => drawTraj(c, mapFn, o, pt, panel, span, T.color)); });
+        else if (S.track.length) drawTraj(c, mapFn, o, pt, panel, span);
+      };
+      drawAllTraj(map);
+
+      const showInset = S.inset && (o.insetWhere === 'all' || (o.insetWhere === 'last' && rowLast) || (o.insetWhere === 'ghost' && panel.type !== 'frame'));
+      if (showInset) {
+        const s = S.inset, a = map({ x: s.x, y: s.y }), b = map({ x: s.x + s.w, y: s.y + s.h });
+        const bx = a.x, by = a.y, bw = b.x - a.x, bh = b.y - a.y;
+        let iw = pw * o.insetSize, ih = iw * s.h / s.w;
+        if (ih > ph * 0.7) { ih = ph * 0.7; iw = ih * s.w / s.h; }
+        const m = 0.035 * Math.min(pw, ph);
+        const ix = o.insetCorner[1] === 'r' ? x0 + pw - m - iw : x0 + m;
+        const iy = o.insetCorner[0] === 't' ? y0 + m : y0 + ph - m - ih;
+        const lw = 0.6 * pt;
+        const stroke = fn => { c.lineWidth = lw + 0.8 * pt; c.strokeStyle = 'rgba(0,0,0,0.55)'; fn(); c.lineWidth = lw; c.strokeStyle = o.insetColor; fn(); };
+        if (o.insetLines) {
+          const dx = (ix + iw / 2) - (bx + bw / 2), dy = (iy + ih / 2) - (by + bh / 2);
+          let pairs;
+          if (Math.abs(dx) >= Math.abs(dy)) { const s0 = dx > 0 ? bx + bw : bx, t0 = dx > 0 ? ix : ix + iw; pairs = [[s0, by, t0, iy], [s0, by + bh, t0, iy + ih]]; }
+          else { const s0 = dy > 0 ? by + bh : by, t0 = dy > 0 ? iy : iy + ih; pairs = [[bx, s0, ix, t0], [bx + bw, s0, ix + iw, t0]]; }
+          stroke(() => { c.beginPath(); pairs.forEach(q => { c.moveTo(q[0], q[1]); c.lineTo(q[2], q[3]); }); c.stroke(); });
+        }
+        stroke(() => c.strokeRect(bx, by, bw, bh));
+        c.save();
+        c.beginPath(); c.rect(ix, iy, iw, ih); c.clip();
+        c.drawImage(src.img, s.x * src.k, s.y * src.k, s.w * src.k, s.h * src.k, ix, iy, iw, ih);
+        drawAllTraj(p => ({ x: ix + (p.x - s.x) * iw / s.w, y: iy + (p.y - s.y) * ih / s.h }));
+        c.restore();
+        stroke(() => c.strokeRect(ix, iy, iw, ih));
+      }
+
+      const mg = fpx * 0.4;
+      const tStr = v => Math.max(0, v - (o.timeOrigin === 'start' ? S.start : 0)).toFixed(o.timeDec);
+      if (o.panelLbl !== 'none' && n > 1) {
+        const Lc = String.fromCharCode(97 + (i % 26));
+        drawLabel(c, o, fpx, o.panelLbl === 'paren' ? `(${Lc})` : Lc, x0 + mg, y0 + mg, 'left');
+      }
+      if (o.timeFmt !== 'none' && panel.type !== 'overlay') {
+        const ts = panel.times; let txt;
+        if (panel.type === 'ghost') txt = o.timeFmt === 's' ? `t = ${tStr(ts[0])}–${tStr(ts[ts.length - 1])} s` : `frames ${Math.round(ts[0] * fps())}–${Math.round(ts[ts.length - 1] * fps())}`;
+        else txt = o.timeFmt === 's' ? `t = ${tStr(panel.t)} s` : `frame ${Math.round(panel.t * fps())}`;
+        drawLabel(c, o, fpx, txt, x0 + pw - mg, y0 + ph - mg, 'right');
+      }
+      if (panel.type === 'overlay') {
+        const items = panel.trials.filter(T => T.track.length);
+        if (items.length) {
+          c.font = `${fpx}px ${fam}`;
+          const lh = fpx * 1.2, sw = fpx * 1.6;
+          const lw = Math.max(...items.map(T => c.measureText(T.name).width)) + sw + fpx * 0.9;
+          const lx = x0 + pw - lw - mg, ly = y0 + mg;
+          c.fillStyle = 'rgba(255,255,255,0.88)'; c.fillRect(lx, ly, lw, lh * items.length + fpx * 0.3);
+          c.textBaseline = 'middle'; c.textAlign = 'left';
+          items.forEach((T, k) => {
+            const y = ly + fpx * 0.15 + lh * (k + 0.5);
+            c.strokeStyle = T.color; c.lineWidth = o.trajWidth * pt; c.beginPath(); c.moveTo(lx + fpx * 0.3, y); c.lineTo(lx + fpx * 0.3 + sw, y); c.stroke();
+            c.fillStyle = '#000'; c.fillText(T.name, lx + fpx * 0.6 + sw, y);
+          });
+          c.textBaseline = 'alphabetic';
+        }
+      }
+      c.restore();
+      if (o.border) { c.lineWidth = 0.5 * pt; c.strokeStyle = '#000'; c.strokeRect(x0 + 0.25 * pt, y0 + 0.25 * pt, pw - 0.5 * pt, ph - 0.5 * pt); }
+    } finally { S = active; }
+  });
+
+  if (rowW) {
+    c.font = `${fpx}px ${fam}`; c.fillStyle = '#000'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    L.rowTrials.forEach((T, r) => { c.save(); c.translate(rowW * 0.45, r * (ph + g) + ph / 2); c.rotate(-Math.PI / 2); c.fillText(T.name, 0, 0); c.restore(); });
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  }
+
+  if (showCb) {
+    c.font = `${fpx}px ${fam}`;
+    const y = Hgrid + cbGap, bw = Math.min(W * 0.42, 2.4 * dpi), bx = W - bw - fpx * 1.2;
+    const off = (figTrials.length === 1 && o.timeOrigin === 'video') ? figTrials[0].start : 0;
+    const grd = c.createLinearGradient(bx, 0, bx + bw, 0);
+    VIRIDIS.forEach((v, i) => grd.addColorStop(i / (VIRIDIS.length - 1), `rgb(${v[0]},${v[1]},${v[2]})`));
+    c.fillStyle = grd; c.fillRect(bx, y, bw, cbBar);
+    c.lineWidth = 0.5 * pt; c.strokeStyle = '#000'; c.strokeRect(bx, y, bw, cbBar);
+    c.fillStyle = '#000'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    [0, 0.5, 1].forEach(u => {
+      const x = bx + bw * u;
+      c.beginPath(); c.moveTo(x, y + cbBar); c.lineTo(x, y + cbBar + fpx * 0.25); c.stroke();
+      c.fillText((span * u + off).toFixed(o.timeDec), x, y + cbBar + fpx * 1.1);
+    });
+    c.textAlign = 'right'; c.textBaseline = 'middle';
+    c.fillText('Time (s)', bx - fpx * 0.6, y + cbBar / 2);
+    c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  }
+  return { W, H, rows, cols, widthIn: o.widthIn, heightIn: H / dpi };
+}
+
+const PREVIEW_DPI = 200;
+function preview() {
+  const L = layoutSpec();
+  const off = () => { $('dlPng').disabled = $('dlPdf').disabled = true; };
+  if (!L.panels.length) {
+    setStatus($('outMode').value === 'compare' && readyTrials().length < 2 ? 'Comparison needs at least two videos. Add another in step 1.' : $('selMode').value === 'manual' ? 'Add at least one frame by hand.' : 'Set a snapshot count.', true);
+    off(); return;
+  }
+  if (!L.panels.every(panelReady)) { setStatus('Settings changed. Press Process to update the figure.'); off(); return; }
+  const info = render(fig, L, PREVIEW_DPI);
+  fig.style.display = 'block'; $('figEmpty').style.display = 'none';
+  fig.style.width = Math.min(fig.parentElement.clientWidth - 32, info.widthIn * 96) + 'px';
+  $('figmeta').textContent = `${L.panels.length} panel${L.panels.length > 1 ? 's' : ''} in ${info.rows} × ${info.cols}, ${info.widthIn.toFixed(2)} × ${info.heightIn.toFixed(2)} in`;
+  $('dlPng').disabled = $('dlPdf').disabled = false;
+  G.L = L;
+  setStatus('');
+}
+let timer = 0, refreshing = false, again = false;
+async function refresh() {
+  if (!S.loaded || G.busy) return;
+  if (refreshing) { again = true; return; }
+  refreshing = true;
+  try {
+    const times = snapTimes();
+    if (needsGhost() && times.length && times.every(t => S.frames.has(keyOf(t))) && S.bg && S.bg.key === bgKey()) await buildGhost(times);
+    preview();
+  } finally { refreshing = false; if (again) { again = false; schedule(); } }
+}
+function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 150); }
+document.querySelectorAll('aside input, aside select').forEach(el => {
+  if (['file', 'loadStyle', 'tStart', 'tEnd', 'fps', 'scaleDist'].includes(el.id) || el.closest('#trialList')) return;
+  el.addEventListener(el.type === 'number' || el.type === 'range' ? 'input' : 'change', () => {
+    if ($(el.id + 'V')) $(el.id + 'V').textContent = el.value;
+    if (el.id === 'insetColor') drawOverlay();
+    drawTimeline(); schedule();
+  });
+});
+$('fps').addEventListener('change', () => { onTime(); schedule(); });
+$('widthPreset').addEventListener('change', () => { $('customWBox').style.display = $('widthPreset').value === 'custom' ? '' : 'none'; });
+$('process').addEventListener('click', async () => {
+  if (G.busy) return;
+  const L = layoutSpec();
+  if (!L.panels.length) { preview(); return; }
+  const active = S;
+  G.busy = true; $('process').disabled = true; $('autoTrack').disabled = true;
+  try {
+    const jobs = new Map();
+    L.panels.forEach(p => {
+      const j = jobs.get(p.T) || { times: new Set(), ghost: null, bg: false };
+      if (p.type === 'frame') j.times.add(p.t);
+      if (p.type === 'ghost') { p.times.forEach(t => j.times.add(t)); j.ghost = p.times; j.bg = true; }
+      if (p.type === 'overlay') j.bg = true;
+      jobs.set(p.T, j);
+    });
+    const order = [...jobs.keys()].sort((a, b) => (a === active ? 1 : 0) - (b === active ? 1 : 0));
+    for (const T of order) {
+      const j = jobs.get(T);
+      if (readyTrials().length > 1) setStatus(`Processing ${T.name}…`);
+      await switchTo(T);
+      await grab([...j.times]);
+      if (j.bg) await ensureBg();
+      if (j.ghost) await buildGhost(j.ghost);
+    }
+    await switchTo(active);
+  } catch (err) { setStatus('Processing failed: ' + err.message, true); }
+  finally { G.busy = false; $('process').disabled = false; $('autoTrack').disabled = false; prog(null); }
+  preview();
+});
+
+/* ---------- export ---------- */
+let dlNS; const dlReady = (async () => {
+  try { dlNS = (window.claude && typeof window.claude.use === 'function') ? await window.claude.use('downloads') : null; } catch { dlNS = null; }
+})();
+async function saveFile(name, blob) {
+  if (dlNS) {
+    try { await dlNS.save({ filename: name, data: blob }); setStatus('Saved ' + name); }
+    catch (e) { setStatus(e && e.code === 'declined' ? 'Download cancelled.' : 'Download failed: ' + ((e && e.message) || 'unknown error'), e && e.code !== 'declined'); }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  setStatus('Saved ' + name);
+}
+function exportCanvas() {
+  const dpi = parseInt($('dpi').value, 10), cv = document.createElement('canvas');
+  render(cv, G.L, dpi); return { cv, dpi };
+}
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function withDpi(blob, dpi) {
+  // insert a pHYs chunk so LaTeX and Word place the image at its true physical size
+  const buf = new Uint8Array(await blob.arrayBuffer()), ppm = Math.round(dpi / 0.0254);
+  const ch = new Uint8Array(21), dv = new DataView(ch.buffer);
+  dv.setUint32(0, 9); ch.set([112, 72, 89, 115], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); ch[16] = 1;
+  dv.setUint32(17, crc32(ch.subarray(4, 17)));
+  const out = new Uint8Array(buf.length + 21); out.set(buf.subarray(0, 33)); out.set(ch, 33); out.set(buf.subarray(33), 54);
+  return new Blob([out], { type: 'image/png' });
+}
+$('dlPng').addEventListener('click', async () => {
+  await dlReady; setStatus('Rendering PNG…');
+  const { cv, dpi } = exportCanvas();
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  saveFile(`${S.name}_snapshots_${dpi}dpi.png`, await withDpi(blob, dpi));
+});
+async function deflate(bytes) {
+  const cs = new CompressionStream('deflate');
+  const out = new Response(new Blob([bytes]).stream().pipeThrough(cs));
+  return new Uint8Array(await out.arrayBuffer());
+}
+async function makePdf(cv, dpi) {
+  const w = cv.width, h = cv.height, px = cv.getContext('2d').getImageData(0, 0, w, h).data;
+  const rgb = new Uint8Array(w * h * 3);
+  for (let i = 0, j = 0; i < px.length; i += 4) { rgb[j++] = px[i]; rgb[j++] = px[i + 1]; rgb[j++] = px[i + 2]; }
+  const z = await deflate(rgb);
+  const PW = (w / dpi * 72).toFixed(3), PH = (h / dpi * 72).toFixed(3);
+  const enc = s => new TextEncoder().encode(s), parts = [], offs = []; let len = 0;
+  const push = p => { const b = typeof p === 'string' ? enc(p) : p; parts.push(b); len += b.length; };
+  const obj = (n, body) => { offs[n] = len; push(`${n} 0 obj\n`); body(); push('\nendobj\n'); };
+  push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, () => push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
+  obj(3, () => push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`));
+  obj(4, () => { push(`<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${z.length} >>\nstream\n`); push(z); push('\nendstream'); });
+  const content = `q ${PW} 0 0 ${PH} 0 0 cm /Im0 Do Q`;
+  obj(5, () => push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
+  const xref = len;
+  push(`xref\n0 6\n0000000000 65535 f \n${[1, 2, 3, 4, 5].map(n => String(offs[n]).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, { type: 'application/pdf' });
+}
+$('dlPdf').addEventListener('click', async () => {
+  await dlReady;
+  if (typeof CompressionStream === 'undefined') { setStatus('This browser cannot build PDFs. Use a current Chrome, Edge, Firefox or Safari, or download the PNG.', true); return; }
+  setStatus('Rendering PDF…');
+  const { cv, dpi } = exportCanvas();
+  saveFile(`${S.name}_snapshots.pdf`, await makePdf(cv, dpi));
+});
+
+/* ---------- style presets ---------- */
+const STYLE_IDS = ['rowLbl', 'vidWhich', 'vidSpeed', 'vidWidth', 'outMode', 'bgN', 'ghThr', 'ghClean', 'ghMin', 'trkMethod', 'trkStep', 'trkSize', 'cbar', 'insetWhere', 'insetCorner', 'insetSize', 'insetColor', 'insetLines', 'rows', 'gutter', 'border', 'aspect', 'trajMode', 'trajColorMode', 'trajColor', 'trajWidth', 'markStart', 'markNow', 'timeFmt', 'timeDec', 'timeOrigin', 'panelLbl', 'lblStyle', 'font', 'fontPt', 'widthPreset', 'customW', 'dpi', 'nSnap'];
+$('saveStyle').addEventListener('click', async () => {
+  await dlReady;
+  const o = { figureBenchStyle: 1 };
+  STYLE_IDS.forEach(id => { const el = $(id); o[id] = el.type === 'checkbox' ? el.checked : el.value; });
+  saveFile('figure-style.json', new Blob([JSON.stringify(o, null, 2)], { type: 'application/json' }));
+});
+$('loadStyleBtn').addEventListener('click', () => $('loadStyle').click());
+$('loadStyle').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const o = JSON.parse(await f.text());
+    if (!o.figureBenchStyle) throw new Error('not a Figure Bench style file');
+    STYLE_IDS.forEach(id => { if (id in o) { const el = $(id); if (el.type === 'checkbox') el.checked = !!o[id]; else el.value = String(o[id]); if ($(id + 'V')) $(id + 'V').textContent = el.value; } });
+    $('customWBox').style.display = $('widthPreset').value === 'custom' ? '' : 'none';
+    setStatus('Style loaded.'); drawTimeline(); schedule();
+  } catch (err) { setStatus('Could not load style: ' + err.message, true); }
+  e.target.value = '';
+});
+
+/* ---------- supplementary video ---------- */
+let recStop = false;
+function seekVid(v, t) {
+  return new Promise(res => { const to = setTimeout(res, 2500); v.addEventListener('seeked', () => { clearTimeout(to); res(); }, { once: true }); v.currentTime = t; });
+}
+$('recStop').addEventListener('click', () => { recStop = true; });
+$('recVideo').addEventListener('click', async () => {
+  if (G.busy || !S.init) return;
+  if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) { setStatus('This browser cannot record video. Use a current Chrome, Edge, Firefox or Safari.', true); return; }
+  const mime = ['video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  if (!mime) { setStatus('This browser has no supported video recorder.', true); return; }
+  const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
+  const list = $('vidWhich').value === 'all' ? readyTrials() : [S];
+  const speed = parseFloat($('vidSpeed').value), outW = parseInt($('vidWidth').value, 10);
+  const o = { ...opts(), trajMode: $('trajMode').value === 'off' ? 'off' : 'progress' };
+  G.busy = true; recStop = false; video.pause();
+  $('recVideo').disabled = true; $('recStop').disabled = false; $('process').disabled = true;
+  const vids = [];
+  try {
+    for (const T of list) {
+      const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = T.url;
+      await new Promise((res, rej) => { v.addEventListener('loadeddata', res, { once: true }); v.addEventListener('error', () => rej(new Error('could not open ' + T.name)), { once: true }); });
+      await seekVid(v, T.start); vids.push(v);
+    }
+    const n = list.length, ar = S.crop.w / S.crop.h, gap = n > 1 ? Math.round(outW * 0.005) : 0;
+    const tileW = (outW - (n - 1) * gap) / n, tileH = tileW / ar;
+    const cv = document.createElement('canvas'); cv.width = outW; cv.height = Math.max(2, Math.round(tileH / 2) * 2);
+    const c = cv.getContext('2d');
+    const pt = tileW / 420, fpx = Math.max(12, tileW * 0.032), span = colorSpan(list);
+    const frame = () => {
+      c.fillStyle = '#fff'; c.fillRect(0, 0, cv.width, cv.height);
+      let done = true;
+      list.forEach((T, i) => {
+        const v = vids[i]; let t = v.currentTime;
+        if (t >= T.end - 1e-3 || v.ended) { if (!v.paused) v.pause(); t = Math.min(t, T.end); } else done = false;
+        const x0 = i * (tileW + gap), cr = fitRect(T.crop, ar), sx = tileW / cr.w, sy = tileH / cr.h;
+        c.save(); c.beginPath(); c.rect(x0, 0, tileW, tileH); c.clip();
+        c.drawImage(v, cr.x, cr.y, cr.w, cr.h, x0, 0, tileW, tileH);
+        if (o.trajMode !== 'off' && T.track.length) withTrial(T, () => drawTraj(c, p => ({ x: x0 + (p.x - cr.x) * sx, y: (p.y - cr.y) * sy }), o, pt, { type: 'frame', t }, span));
+        const mg = fpx * 0.45;
+        if (n > 1) drawLabel(c, o, fpx, T.name, x0 + mg, mg, 'left');
+        if (o.timeFmt !== 'none') {
+          const tv = Math.max(0, t - (o.timeOrigin === 'start' ? T.start : 0));
+          drawLabel(c, o, fpx, o.timeFmt === 's' ? `t = ${tv.toFixed(o.timeDec)} s` : `frame ${Math.round(t * fps())}`, x0 + tileW - mg, tileH - mg, 'right');
+        }
+        if (i === 0 && speed !== 1) drawLabel(c, o, fpx, `${speed}×`, x0 + mg, tileH - mg, 'bottom');
+        c.restore();
+      });
+      return done;
+    };
+    frame();
+    const stream = cv.captureStream(30);
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: outW >= 1920 ? 12e6 : 8e6 });
+    const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(r => rec.onstop = r);
+    rec.start(250);
+    vids.forEach(v => v.playbackRate = speed);
+    await Promise.all(vids.map(v => v.play()));
+    const total = Math.max(...list.map(T => T.end - T.start));
+    await new Promise(res => {
+      const tick = () => {
+        const done = frame();
+        const el = Math.max(...list.map((T, i) => vids[i].currentTime - T.start));
+        prog(clamp(el / total, 0, 1));
+        setStatus(`Recording… ${clamp(el, 0, total).toFixed(1)} of ${total.toFixed(1)} s of footage. Keep this tab visible.`);
+        if (done || recStop) return res();
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    vids.forEach(v => v.pause()); frame();
+    await new Promise(r => setTimeout(r, 400));
+    rec.stop(); await stopped;
+    const blob = new Blob(chunks, { type: mime.split(';')[0] });
+    prog(null);
+    await saveFile(`${S.name}${n > 1 ? '_comparison' : ''}_${speed}x.${ext}`, blob);
+  } catch (err) { setStatus('Recording failed: ' + err.message, true); }
+  finally {
+    G.busy = false; vids.forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); }); prog(null);
+    $('recVideo').disabled = false; $('recStop').disabled = true; $('process').disabled = false;
+  }
+});
+
+renderChips();
+})();
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
