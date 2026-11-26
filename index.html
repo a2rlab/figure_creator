@@ -156,16 +156,16 @@ canvas.timeline { width: 100%; height: 40px; display: block; margin-top: 8px; cu
     <div class="row"><label for="selMode">Selection</label>
       <select id="selMode"><option value="uniform">Evenly spaced</option><option value="manual">Chosen by hand</option></select>
     </div>
-    <div id="uniformBox" class="row"><label for="nSnap">Count</label><input type="number" id="nSnap" value="5" min="1" max="40"></div>
+    <div id="uniformBox" class="row"><label for="nSnap">Count</label><input type="number" id="nSnap" value="6" min="1" max="40"></div>
     <div id="manualBox" style="display:none">
       <div class="row"><button id="addKey" disabled>Add current frame</button><button id="clearKeys">Clear</button></div>
       <div class="chips" id="keyChips"></div>
     </div>
     <div class="row"><label for="rows">Layout</label>
-      <select id="rows"><option value="1">One row</option><option value="2">Two rows</option><option value="3">Three rows</option><option value="col">One column</option></select>
+      <select id="rows"><option value="1">One row</option><option value="2" selected>Two rows</option><option value="3">Three rows</option><option value="col">One column</option></select>
     </div>
     <div class="row"><label for="gutter">Gap</label><input type="number" id="gutter" value="2" min="0" max="20" step="0.5"> pt</div>
-    <div class="row tight"><input type="checkbox" id="border"><label for="border">Thin border around each panel</label></div>
+    <div class="row tight"><input type="checkbox" id="border" checked><label for="border">Thin border around each panel</label></div>
   </section>
 
   <section class="step">
@@ -210,7 +210,7 @@ canvas.timeline { width: 100%; height: 40px; display: block; margin-top: 8px; cu
       <input type="color" id="trajColor" value="#d62728" aria-label="Trajectory colour">
     </div>
     <div class="row tight"><input type="checkbox" id="cbar" checked><label for="cbar">Time colour bar under the figure</label></div>
-    <div class="row"><label for="trajWidth">Line width</label><input type="number" id="trajWidth" value="1.2" min="0.25" max="6" step="0.25"> pt</div>
+    <div class="row"><label for="trajWidth">Line width</label><input type="number" id="trajWidth" value="1" min="0.25" max="6" step="0.25"> pt</div>
     <div class="row tight"><input type="checkbox" id="markStart" checked><label for="markStart">Start marker</label><input type="checkbox" id="markNow" checked><label for="markNow">Position dots</label></div>
   </section>
 
