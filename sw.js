@@ -1,6 +1,6 @@
 // Figure Bench service worker: keeps the app usable offline after the first visit.
 // Bump VERSION whenever you upload a new index.html so students get the update.
-const VERSION = 'fb-v5';
+const VERSION = 'fb-v6';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
