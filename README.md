@@ -2,8 +2,6 @@
 
 Turn robot experiment videos into publication-ready figures: snapshot sequences with time labels, trajectories, ghost (stroboscopic) composites, method comparisons, and supplementary videos.
 
-**Open the tool:** https://a2rlab.github.io/figure-bench/
-
 ## Your videos stay on your computer
 
 Figure Bench is a single web page. Your browser downloads the page once. After that, all processing (decoding, tracking, compositing, exporting) runs locally on your machine. Videos are never uploaded, and there is no server to upload them to.
