@@ -96,15 +96,3 @@ Tips for a clean scientific look:
 - PDF export contains a high-resolution image, not vector text.
 - Video recording quality depends on the computer keeping up in real time. Use a lower speed or 1280 px width on slower machines.
 
-## For maintainers
-
-The repository is a static site: `index.html` is the whole app, plus `manifest.webmanifest`, `sw.js`, and two icons for offline use.
-
-To publish, go to **Settings → Pages → Deploy from a branch**, then select `main` and `/ (root)`.
-
-To update:
-
-1. Replace `index.html`.
-2. Change `VERSION` at the top of `sw.js`, for example `fb-v3` → `fb-v4`.
-
-Students get the new version the next time they open the page while online.
